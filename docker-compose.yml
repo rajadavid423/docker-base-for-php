@@ -1,0 +1,19 @@
+version: '3'
+services:
+  spark:
+    build:
+      context: /var/www/html/docker-php
+      dockerfile: Dockerfile
+    container_name: spark
+    restart: unless-stopped
+    ports:
+      - "8002:80"
+      - "8003:3000"
+    volumes:
+      - .:/var/www/html/spark
+    networks:
+      - docker-php_docker-php-network
+#Docker Networks
+networks:
+   docker-php_docker-php-network:
+    external: true
