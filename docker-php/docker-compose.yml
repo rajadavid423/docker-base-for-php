@@ -1,0 +1,81 @@
+version: '3'
+services:
+
+#App service
+  ubuntu-20.04:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: ubuntu-20.04
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+    networks:
+      - docker-php-network
+
+#Mysql service
+  sql:
+    image: mysql:latest
+    container_name: sql
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      SERVICE_NAME: mysql
+      MYSQL_INIT_LIMIT: 1073741824 # 1 GB data limit
+    volumes:
+      - /var/www/html/docker-php/docker-db/sql/phpdbdata:/var/lib/mysql/
+      - /var/www/html/docker-php/docker-db/conf/mysql/my.cnf:/etc/mysql/my.cnf
+    networks:
+      - docker-php-network
+
+#Phpmyadmin service
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8012:80"
+    environment:
+        - PMA_HOST=${DB_HOST}
+        - PMA_PORT=3306
+        # - PHP_UPLOAD_MAX_FILESIZE=500M
+        - UPLOAD_LIMIT=10240M
+        - MEMORY_LIMIT=10240M
+        - MAX_EXECUTION_TIME=300
+    networks:
+      - docker-php-network
+
+#Mongo db service
+  mongo:
+    image: mongo:4.4.4
+    container_name: mongo
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "27018:27017"
+    volumes:
+      - /var/www/html/docker-php/docker-db/mongo/dbdata:/data/db
+    networks:
+      - docker-php-network
+
+#Redis cache service
+  redis:
+    image: bitnami/redis:latest
+    container_name: redis
+    restart: unless-stopped
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports: 
+      - 6378:6379
+    networks:
+      - docker-php-network
+
+#Docker Networks
+networks:
+  docker-php-network:
+    driver: bridge
